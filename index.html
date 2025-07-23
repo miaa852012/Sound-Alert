@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sound Alert</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- MacOS Style -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.ably.io/lib/ably.min-1.js"></script>
+  <style>
+    body {
+      margin: 0; min-height: 100vh; background: linear-gradient(120deg, #cfd9df, #e2ebf0 82%);
+      font-family: 'Inter', system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .macos-window {
+      background: rgba(255,255,255,0.77); backdrop-filter: blur(18px);
+      border-radius: 18px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.12), 0 2px 8px 0 rgba(0,0,0,0.09);
+      max-width: 400px; width: 96vw; padding: 32px 28px 28px 28px; margin: 32px;
+      animation: pop-in 1s cubic-bezier(.25,1.7,.5,1) both; position: relative; overflow: hidden;
+    }
+    @keyframes pop-in { 0% { opacity: 0; transform: scale(0.93) translateY(36px);} 100% { opacity: 1; transform: scale(1) translateY(0);} }
+    .macos-titlebar { display: flex; align-items: center; gap: 8px; height: 32px; margin-bottom: 18px; }
+    .macos-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; margin-right: 3.5px; border: 1.5px solid #d1d5db; }
+    .macos-dot.red { background: #ff5f56; border-color: #e0443e;}
+    .macos-dot.yellow { background: #ffbd2e; border-color: #dea123;}
+    .macos-dot.green { background: #27c93f; border-color: #12a520;}
+    .window-title { font-size: 19px; font-weight: 600; color: #22223b; margin-left: 18px; letter-spacing: 0.02em; text-shadow: 0 1px 0 rgba(255,255,255,.13);}
+    .macos-content { display: flex; flex-direction: column; gap: 18px;}
+    .macos-label { font-size: 16px; color: #5c6784; font-weight: 500; margin-bottom: 2px; margin-top: 4px;}
+    .macos-input { width: 100%; padding: 12px 16px; border-radius: 9px; border: 1.5px solid #dbeafe; font-size: 16px; background: rgba(255,255,255,0.44); box-shadow: 0 1px 4px 0 rgba(0,0,0,0.03); outline: none; transition: border 0.2s, box-shadow 0.2s;}
+    .macos-input:focus { border: 1.5px solid #818cf8; box-shadow: 0 0 0 2px #a5b4fc55;}
+    .macos-btn { background: linear-gradient(90deg, #818cf8 0%, #38bdf8 100%); color: #fff; border: none; border-radius: 9px; padding: 12px 0; font-size: 17px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px 0 rgba(67,87,255,0.09); transition: transform 0.16s cubic-bezier(.29,1.5,.6,1), box-shadow 0.16s; margin-top: 6px;}
+    .macos-btn:hover { transform: translateY(-2px) scale(1.025); box-shadow: 0 6px 24px 0 rgba(67,87,255,0.17); background: linear-gradient(90deg, #6366f1 0%, #0ea5e9 100%);}
+    .macos-status { min-height: 20px; color: #059669; font-weight: 500; margin-top: 8px; transition: color 0.3s;}
+    @media (max-width: 500px) { .macos-window { padding: 18px 8vw; } }
+  </style>
+</head>
+<body>
+  <div class="macos-window">
+    <div class="macos-titlebar">
+      <span class="macos-dot red"></span>
+      <span class="macos-dot yellow"></span>
+      <span class="macos-dot green"></span>
+      <span class="window-title">Sound Alert</span>
+    </div>
+    <form class="macos-content" id="send-form">
+      <label class="macos-label" for="ytlink">YouTube Link</label>
+      <input class="macos-input" type="text" id="ytlink" name="ytlink" placeholder="Paste YouTube URL here" required>
+      <button class="macos-btn" type="submit">Send Alert</button>
+      <span class="macos-status" id="status"></span>
+    </form>
+  </div>
+  <script>
+    // Replace with your Ably API key (for demos only! Use token auth in production)
+    const ABLY_KEY = "YOUR-ABLY-API-KEY-HERE";
+    const ably = new Ably.Realtime(ABLY_KEY);
+    const channel = ably.channels.get('sound-alert');
 
+    document.getElementById('send-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const status = document.getElementById('status');
+      const url = document.getElementById('ytlink').value.trim();
+      status.style.color = "#818cf8";
+      status.textContent = "Sending...";
+      channel.publish('youtube', { url })
+      .then(() => {
+        status.style.color = "#059669";
+        status.textContent = "✅ Sent!";
+        document.getElementById('ytlink').value = "";
+      })
+      .catch(() => {
+        status.style.color = "#dc2626";
+        status.textContent = "❌ Error sending!";
+      });
+    });
+  </script>
+</body>
+</html>
